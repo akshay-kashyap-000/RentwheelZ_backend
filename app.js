@@ -1,4 +1,4 @@
-const dotenv = require('dotenv');   
+const dotenv = require('dotenv');
 dotenv.config();
 const express = require('express');
 const cors = require('cors');
@@ -12,12 +12,29 @@ const rideRoutes = require('./routes/ride.routes');
 const cors = require('cors');
 connectToDb();
 
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://rentwheel-z-frontend.vercel.app" // <-- add your Vercel frontend URL
+];
+
 app.use(cors({
-    // allow both Vite (5173) and CRA (3000) dev servers during development
-    origin:["http://localhost:5173", "http://localhost:3000"], //$ defines the allowed origins
-    credentials:true, //$ to allow cookies to be sent to frontend along with requests
-    methods:["GET","POST","PATCH","DELETE"] //$ allowed methods
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            return callback(null, true);
+        } else {
+            return callback(new Error('CORS policy: Origin not allowed'));
+        }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept"]
 }));
+
+// handle preflight for all routes
+app.options('*', cors({ origin: allowedOrigins, credentials: true }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
